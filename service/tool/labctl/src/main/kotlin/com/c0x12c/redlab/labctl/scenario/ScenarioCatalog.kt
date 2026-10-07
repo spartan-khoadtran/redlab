@@ -37,7 +37,7 @@ object ScenarioCatalog {
     title = "One tenant's traffic surges",
     level = 1,
     topics = listOf("red", "load"),
-    // Crawler rate calibrated to this machine: aim for about 70% of 2 Postgres cores on cache misses.
+    // Crawler rate calibrated to this machine: aim for about 90% of 2 Postgres cores on cache misses.
     params = { random, context ->
       val cost = context.productDetailSeconds ?: DEFAULT_PRODUCT_DETAIL_SECONDS
       val extra = (CRAWLER_CPU_BUDGET / cost * random.nextDouble(0.9, 1.1)).roundToInt().coerceIn(MIN_CRAWLER_RPS, MAX_CRAWLER_RPS)
@@ -109,7 +109,7 @@ object ScenarioCatalog {
     title = "Connection pool exhausted after a deploy",
     level = 2,
     topics = listOf("layers", "use", "little"),
-    params = { random, _ -> mapOf("recommend_ms" to random.nextInt(200, 261)) },
+    params = { random, _ -> mapOf("recommend_ms" to random.nextInt(290, 351)) },
     faults = { p -> FaultSpec(services = mapOf("api" to mapOf("recommend_in_txn" to true), "pricing" to mapOf("recommend_ms" to p.int("recommend_ms")))) },
     marker = "Deploy checkout-api v2.31: product suggestions added to the checkout step",
     ticket = { p ->
@@ -129,13 +129,15 @@ object ScenarioCatalog {
       "v2.31 calls pricing /recommend (about ${p.int("recommend_ms")} ms) while still holding the connection with a transaction open. " +
         "The connection hold time per checkout goes from about 10 ms to about $hold ms. At about $CHECKOUTS_PER_SECOND checkouts/s, " +
         "Little's Law gives L = $CHECKOUTS_PER_SECOND x ${p.fixed(holdSeconds, 3)} ≈ ${p.fixed(need, 1)} connections, above the pool of 4. " +
-        "The pool saturates: requests wait for a connection and get a 503 after 2 s. Postgres is not slow: exec time is flat and the connection count is low. " +
+        "The pool saturates: requests wait for a connection and get a 503 after 2 s. Postgres is not slow: exec time is flat. " +
+        "What Postgres does show is about 4 connections 'idle in transaction': each one holds a transaction open while api waits for pricing. " +
         "Fix: call /recommend outside the transaction, or asynchronously. Raising the pool only hides the problem and may hit max_connections when you scale."
     },
     evidence = listOf(
       "histogram_quantile(0.99, sum by (le, op) (rate(db_client_session_seconds_bucket{job=\"api\"}[1m])))",
       "sum by (query) (rate(pg_query_exec_seconds_total[1m])) / sum by (query) (rate(pg_query_calls_total[1m]))",
-      "db_pool_in_use{job=\"api\"}, db_pool_waiting{job=\"api\"}, db_pool_max{job=\"api\"}"
+      "db_pool_in_use{job=\"api\"}, db_pool_waiting{job=\"api\"}, db_pool_max{job=\"api\"}",
+      "pg_connections{state=\"idle in transaction\"}"
     ),
     doc = "End-to-end investigation example; Linking RED and USE > Little's Law"
   )
@@ -378,8 +380,8 @@ object ScenarioCatalog {
       "The client set a ${p.int("timeout")} ms timeout on /checkout, while half of the /price requests are about ${p.int("extra")} ms slower, " +
         "so the server-side p99 exceeds that timeout. The client gives up and records a timeout; the server finishes anyway and records a 200. " +
         "Timeouts disagree between layers: the client sees errors, the server sees success and wastes the work. " +
-        "Note too that the LB p99 barely moves, because requests the client cancels midway are not recorded in Envoy's histogram. " +
-        "Metrics are usually recorded when a request ends, so an abandoned request easily vanishes from the server-side numbers."
+        "The LB shows no errors either: from its side the client just went away, so the timeouts exist only in the client's numbers. " +
+        "Fix: set the client timeout from the server's real p99 plus a margin, and make the server stop work the client has abandoned."
     },
     evidence = listOf(
       "sum by (outcome) (rate(client_requests_total{endpoint=\"checkout\"}[1m]))",
@@ -451,7 +453,8 @@ object ScenarioCatalog {
     title = "Lock contention on one hot row",
     level = 3,
     topics = listOf("use", "db", "layers"),
-    params = { random, _ -> mapOf("hold" to random.nextInt(45, 59)) },
+    // Each checkout holds the hot row for hold + about 5 ms; above about 61 ms, 15 checkouts/s exceed what one row lock can serve.
+    params = { random, _ -> mapOf("hold" to random.nextInt(70, 86)) },
     faults = { p -> FaultSpec(services = mapOf("api" to mapOf("hot_row" to true, "lock_hold_ms" to p.int("hold")))) },
     marker = "Deploy checkout-api v2.33: reserve inventory when placing an order",
     ticket = { p -> "At ${p.startedAt}, /checkout is slow with 503s. This time the DB team confirms that query execution time inside Postgres went up." },
@@ -537,9 +540,9 @@ object ScenarioCatalog {
   private const val HUNDREDTHS = 100.0
   private const val MILLIS_PER_SECOND = 1_000.0
   private const val DEFAULT_PRODUCT_DETAIL_SECONDS = 0.012
-  private const val CRAWLER_CPU_BUDGET = 1.4
+  private const val CRAWLER_CPU_BUDGET = 1.8
   private const val MIN_CRAWLER_RPS = 40
-  private const val MAX_CRAWLER_RPS = 200
+  private const val MAX_CRAWLER_RPS = 600
   private const val BASE_CHECKOUT_HOLD_MS = 25
   private const val CHECKOUTS_PER_SECOND = 15
   private const val AVERAGE_BASKET = 2.5

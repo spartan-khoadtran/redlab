@@ -57,7 +57,7 @@ class ScenarioCatalogTest {
     val scenario = ScenarioCatalog.byId.getValue("tenant_spike")
     val cheap = scenario.params(Random(1), ExerciseContext(productDetailSeconds = 0.001))["extra"] as Int
     val expensive = scenario.params(Random(1), ExerciseContext(productDetailSeconds = 0.5))["extra"] as Int
-    assertThat(cheap).isEqualTo(200)
+    assertThat(cheap).isEqualTo(600)
     assertThat(expensive).isEqualTo(40)
   }
 
