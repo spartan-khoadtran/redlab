@@ -40,3 +40,7 @@ datasources:
             query: sum by (route) (rate(http_server_requests_total{$$__tags}[1m]))
           - name: p99 latency by route
             query: histogram_quantile(0.99, sum by (le, route) (rate(http_server_duration_seconds_bucket{$$__tags}[1m])))
+          - name: Worker processing p99 and lag
+            query: histogram_quantile(0.99, sum by (le) (rate(kafka_processing_seconds_bucket{$$__tags}[1m]))) or max by (partition) (kafka_consumer_lag_seconds{$$__tags})
+          - name: Client p99 by endpoint
+            query: histogram_quantile(0.99, sum by (le, endpoint) (rate(client_duration_seconds_bucket{$$__tags}[1m])))

@@ -162,7 +162,7 @@ object ScenarioCatalog {
       val queries = (AVERAGE_BASKET * p.int("k")).roundToInt()
       "The new ORM loads prices one product at a time, ${p.int("k")} times per product (lazy loading). An average checkout of $AVERAGE_BASKET products " +
         "turns into about $queries queries instead of 1. The API rate is flat but the DB rate is up: the fan-out grew, not the users. " +
-        "Each query's exec time inside Postgres stays small; checkout is slower because the round trips add up. " +
+        "Each query is fast inside Postgres and /checkout gets only a little slower, so users barely notice: the cost lands on the DB as load. " +
         "Fix: load in batches (WHERE id = ANY(...)) or eager loading."
     },
     evidence = listOf(
@@ -253,7 +253,7 @@ object ScenarioCatalog {
     hints = listOf(
       "Put the LB (Envoy) p99 and the api p99 on the same chart.",
       "The gap between the two lines is time the request spends where? See the Software resources row of the USE dashboard.",
-      "Look at app_admission_waiting and app_admission_wait_seconds."
+      "Look at the Admission wait p99 panel (app_admission_wait_seconds)."
     ),
     answer = Answer(nature = setOf("arch"), location = setOf("lb", "api"), cause = "queue_before_app"),
     explain = { p ->
@@ -264,7 +264,7 @@ object ScenarioCatalog {
     evidence = listOf(
       "histogram_quantile(0.99, sum by (le) (rate(envoy_http_downstream_rq_time_bucket{envoy_http_conn_manager_prefix=\"ingress\"}[1m]))) / 1000",
       "histogram_quantile(0.99, sum by (le) (rate(http_server_duration_seconds_bucket{job=\"api\"}[1m])))",
-      "app_admission_waiting{job=\"api\"}"
+      "histogram_quantile(0.99, sum by (le) (rate(app_admission_wait_seconds_bucket{job=\"api\"}[1m])))"
     ),
     doc = "RED at many layers > Why Duration differs"
   )
