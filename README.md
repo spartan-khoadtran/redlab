@@ -6,6 +6,9 @@ submit an answer, and the lab scores it.
 
 The full guide lives in the lab doc that goes with this repo.
 
+> **For training only.** This repo exists to teach the RED and USE methods. The services break on
+> purpose, and the code is not meant for production use.
+
 ## How it works
 
 ### The system
@@ -83,3 +86,7 @@ To rebuild one service after a change: `docker compose up -d --build api`. Every
 ## Datadog (optional, experimental)
 
 Put `DD_API_KEY` in `.env`, then `make up-datadog`. Traces go to the Datadog Agent instead of Tempo.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
