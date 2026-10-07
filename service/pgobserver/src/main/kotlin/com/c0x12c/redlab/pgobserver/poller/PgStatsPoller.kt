@@ -49,6 +49,7 @@ class PgStatsPoller(
 
   private val snapshot = AtomicReference(PgSnapshot.DOWN)
   private val knownQueries = ConcurrentHashMap.newKeySet<String>()
+  private val knownStates = ConcurrentHashMap.newKeySet<String>()
   private val connections = LabGauge(registry, "pg_connections", "Backends by state (database lab)", listOf("state"))
   private val ticker: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor { runnable ->
     Thread(runnable, "pg-poll").apply { isDaemon = true }
@@ -94,7 +95,8 @@ class PgStatsPoller(
       PgSnapshot.DOWN
     }
     snapshot.set(fresh)
-    fresh.connections.forEach { (state, count) -> connections.set(count, state) }
+    knownStates.addAll(fresh.connections.keys)
+    knownStates.forEach { state -> connections.set(fresh.connections[state] ?: 0.0, state) }
     fresh.calls.keys.filter { knownQueries.add(it) }.forEach(::registerQuery)
   }
 
