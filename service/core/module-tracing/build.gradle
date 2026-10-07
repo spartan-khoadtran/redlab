@@ -1,0 +1,8 @@
+// OpenTelemetry helpers that know no framework: span scopes, W3C context propagation into OkHttp
+// requests and Kafka headers, and back out of Kafka headers on the consumer.
+dependencies {
+  api(libs.opentelemetry.api)
+  api(libs.opentelemetry.context)
+  implementation(libs.networking.okhttp)
+  implementation(mn.kafka.clients)
+}

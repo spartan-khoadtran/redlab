@@ -1,0 +1,27 @@
+plugins {
+  alias(libs.plugins.ksp)
+}
+
+// The Micronaut wiring every lab service inherits: the fault flag endpoint, the Prometheus scrape
+// endpoint with the process and container binders, the RED filter, the Netty event loop probe, the
+// shared database and Kafka config bindings, and the error handler. core/ stays framework free; the
+// @Controller, @Factory and @ConfigurationProperties glue lives here.
+dependencies {
+  api(project(":core:module-faults"))
+  api(project(":core:module-metrics"))
+  api(project(":core:module-database"))
+  api(project(":shared:module-exception"))
+  implementation(project(":core:module-logging"))
+  implementation(project(":core:module-utility"))
+
+  api(libs.micrometer.registry.prometheus)
+  implementation(libs.opentelemetry.api)
+
+  implementation(mn.micronaut.inject)
+  implementation(mn.micronaut.context)
+  implementation(mn.micronaut.runtime)
+  implementation(mn.micronaut.http)
+  implementation(mn.micronaut.http.netty)
+  implementation(mn.micronaut.http.server.netty)
+  ksp(mn.micronaut.inject.kotlin)
+}

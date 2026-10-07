@@ -1,0 +1,46 @@
+<included>
+  <!-- Every <if> below needs janino on the runtime classpath. -->
+  <property scope="context" name="LOG_FORMAT" value="${LOG_FORMAT:-text}"/>
+  <property scope="context" name="LOG_LEVEL" value="${LOG_LEVEL:-INFO}"/>
+
+  <!-- Each branch declares only its own appender: an unreferenced appender makes logback dump its status at startup. -->
+  <if condition='property("LOG_FORMAT").equals("json")'>
+    <then>
+      <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+          <includeContext>true</includeContext>
+          <includeMdc>true</includeMdc>
+          <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+            <maxDepthPerThrowable>20</maxDepthPerThrowable>
+            <maxLength>2048</maxLength>
+            <shortenedClassNameLength>20</shortenedClassNameLength>
+            <exclude>kotlinx\.coroutines\.</exclude>
+            <rootCauseFirst>true</rootCauseFirst>
+            <inlineHash>true</inlineHash>
+          </throwableConverter>
+        </encoder>
+      </appender>
+      <root level="${LOG_LEVEL}">
+        <appender-ref ref="JSON_CONSOLE"/>
+      </root>
+    </then>
+    <else>
+      <appender name="TEXT_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <withJansi>false</withJansi>
+        <encoder>
+          <pattern>%d{HH:mm:ss.SSS} %-5level %logger{30} - %msg%n</pattern>
+        </encoder>
+      </appender>
+      <root level="${LOG_LEVEL}">
+        <appender-ref ref="TEXT_CONSOLE"/>
+      </root>
+    </else>
+  </if>
+
+  <logger name="io.micronaut.context" level="WARN"/>
+  <logger name="io.micronaut.http" level="WARN"/>
+  <logger name="org.apache.kafka" level="WARN"/>
+  <logger name="org.redisson" level="WARN"/>
+  <logger name="com.zaxxer.hikari" level="WARN"/>
+  <logger name="com.c0x12c.redlab" level="${LOG_LEVEL}"/>
+</included>

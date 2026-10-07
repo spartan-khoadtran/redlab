@@ -1,0 +1,48 @@
+plugins {
+  id("application")
+  alias(libs.plugins.ksp)
+  alias(libs.plugins.allopen)
+}
+
+group "com.c0x12c.redlab.pricingapi"
+version "1.0-SNAPSHOT"
+
+// api:pricing: the synchronous downstream of checkout. POST /price (fast) and POST /recommend (slow
+// by design, only called by the v2.31 feature). Its faults add latency or errors to /price.
+dependencies {
+  implementation(libs.kotlin.stdlib)
+
+  implementation(project(":shared:module-client"))
+  implementation(project(":shared:module-infra"))
+  implementation(project(":core:module-faults"))
+  implementation(project(":core:module-logging"))
+  implementation(project(":core:module-tracing"))
+  implementation(project(":core:module-utility"))
+
+  implementation(mn.micronaut.kotlin.runtime)
+  implementation(mn.micronaut.runtime)
+  implementation(mn.micronaut.http.server.netty)
+  implementation(mn.micronaut.jackson.databind)
+  implementation(mn.micronaut.inject)
+  compileOnly(mn.micronaut.aop)
+  ksp(mn.micronaut.inject.kotlin)
+
+  implementation(mn.micronaut.tracing.opentelemetry.http)
+  runtimeOnly(libs.opentelemetry.exporter.otlp) {
+    exclude group: "io.opentelemetry", module: "opentelemetry-exporter-sender-okhttp"
+  }
+  runtimeOnly(libs.opentelemetry.exporter.sender.jdk)
+
+  implementation(libs.jackson.module.kotlin)
+  implementation(libs.logging.logback.classic)
+  runtimeOnly(libs.utility.snakeyaml)
+}
+
+allOpen {
+  annotation("io.micronaut.aop.Around")
+}
+
+application {
+  mainClass.set("com.c0x12c.redlab.pricingapi.Main")
+  applicationName = "pricing-api"
+}

@@ -1,0 +1,35 @@
+plugins {
+  alias(libs.plugins.ksp)
+}
+
+// Checkout logic: the manager, the DB session gate, the pricing client, the Redis cache, the Kafka
+// producer and the backfill job, plus the admission filter. Every fault key the api exercises
+// turn on is read here. The repositories arrive through module-api; the deployable wires both.
+dependencies {
+  implementation(project(":domain:module-checkout:module-api"))
+  implementation(project(":shared:module-client"))
+  implementation(project(":shared:module-exception"))
+  implementation(project(":shared:module-infra"))
+  implementation(project(":core:module-database"))
+  implementation(project(":core:module-faults"))
+  implementation(project(":core:module-logging"))
+  implementation(project(":core:module-metrics"))
+  implementation(project(":core:module-tracing"))
+  implementation(project(":core:module-utility"))
+
+  implementation(libs.arrow.core)
+  implementation(libs.jackson.databind)
+  implementation(libs.networking.okhttp)
+  implementation(libs.networking.retrofit)
+  implementation(libs.networking.retrofit.jackson)
+  implementation(libs.redis.redisson)
+  implementation(mn.kafka.clients)
+
+  implementation(mn.micronaut.inject)
+  implementation(mn.micronaut.context)
+  implementation(mn.micronaut.http)
+  implementation(mn.micronaut.runtime)
+  ksp(mn.micronaut.inject.kotlin)
+
+  testImplementation(libs.kotlinx.coroutines.core)
+}

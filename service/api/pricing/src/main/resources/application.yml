@@ -1,0 +1,37 @@
+micronaut:
+  application:
+    name: pricing
+  server:
+    port: ${PORT:8001}
+  netty:
+    event-loops:
+      default:
+        num-threads: 1
+
+jackson:
+  property-naming-strategy: SNAKE_CASE
+
+otel:
+  service:
+    name: ${SERVICE_NAME:pricing}
+  exporter:
+    otlp:
+      endpoint: ${OTLP_ENDPOINT:`http://tempo:4318`}
+      protocol: http/protobuf
+  traces:
+    exporter: otlp
+    sampler: parentbased_traceidratio
+    sampler.arg: ${TRACE_SAMPLE_RATIO:1.0}
+  metrics:
+    exporter: none
+  logs:
+    exporter: none
+  # Not traced: the scrape, the controller's fault pushes and Envoy's health checks would drown the real requests.
+  exclusions:
+    - /health
+    - /metrics
+    - /admin/.*
+
+app:
+  service:
+    name: ${SERVICE_NAME:pricing}

@@ -1,0 +1,5 @@
+// Small framework-free helpers every service shares: the resizable gate that stands in for a
+// connection pool or an admission queue, jitter, a CPU burner, and a connect-until-it-works retry.
+dependencies {
+  implementation(project(":core:module-logging"))
+}

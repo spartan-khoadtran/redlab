@@ -1,0 +1,19 @@
+plugins {
+  id("application")
+}
+
+group "com.c0x12c.redlab.dashboards"
+version "1.0-SNAPSHOT"
+
+// tool:dashboards: generates the two Grafana dashboards under config/grafana/dashboards. The JSON
+// is a build artifact; edit the boards here and run `make dashboards`.
+dependencies {
+  implementation(libs.kotlin.stdlib)
+  implementation(libs.jackson.databind)
+  implementation(libs.jackson.module.kotlin)
+}
+
+application {
+  mainClass.set("com.c0x12c.redlab.dashboards.Main")
+  applicationName = "dashboards"
+}

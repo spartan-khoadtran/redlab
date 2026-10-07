@@ -1,0 +1,8 @@
+// Checkout contracts: the manager interface and the two repository interfaces. No logic here. The
+// DTOs come from shared/module-client and are re-exposed as api so the deployable sees the types
+// the manager returns; module-exception and arrow are api for the Either<ClientException, _> return.
+dependencies {
+  api(project(":shared:module-client"))
+  api(project(":shared:module-exception"))
+  api(libs.arrow.core)
+}

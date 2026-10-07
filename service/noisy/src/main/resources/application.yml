@@ -1,0 +1,12 @@
+micronaut:
+  application:
+    name: noisy
+  server:
+    port: ${PORT:8005}
+
+jackson:
+  property-naming-strategy: SNAKE_CASE
+
+app:
+  service:
+    name: ${SERVICE_NAME:noisy}

@@ -1,0 +1,48 @@
+plugins {
+  id("application")
+  alias(libs.plugins.ksp)
+}
+
+group "com.c0x12c.redlab.loadgen"
+version "1.0-SNAPSHOT"
+
+// loadgen: plays the users (web, iOS, Android, a partner integration). Open-model load:
+// arrivals follow a Poisson process per tenant, independent of how fast the system answers, so
+// there is no coordinated omission. Its metrics are the client / RUM layer of the lab.
+dependencies {
+  implementation(libs.kotlin.stdlib)
+
+  implementation(project(":shared:module-infra"))
+  implementation(project(":core:module-faults"))
+  implementation(project(":core:module-logging"))
+  implementation(project(":core:module-metrics"))
+  implementation(project(":core:module-tracing"))
+
+  implementation(libs.jackson.databind)
+  implementation(libs.kotlinx.coroutines.core)
+  implementation(libs.networking.okhttp)
+
+  implementation(mn.micronaut.kotlin.runtime)
+  implementation(mn.micronaut.runtime)
+  implementation(mn.micronaut.http.server.netty)
+  implementation(mn.micronaut.jackson.databind)
+  implementation(mn.micronaut.inject)
+  ksp(mn.micronaut.inject.kotlin)
+
+  implementation(mn.micronaut.tracing.opentelemetry.http)
+  runtimeOnly(libs.opentelemetry.exporter.otlp) {
+    exclude group: "io.opentelemetry", module: "opentelemetry-exporter-sender-okhttp"
+  }
+  runtimeOnly(libs.opentelemetry.exporter.sender.jdk)
+
+  implementation(libs.jackson.module.kotlin)
+  implementation(libs.logging.logback.classic)
+  runtimeOnly(libs.utility.snakeyaml)
+
+  testImplementation(libs.kotlinx.coroutines.test)
+}
+
+application {
+  mainClass.set("com.c0x12c.redlab.loadgen.Main")
+  applicationName = "loadgen"
+}

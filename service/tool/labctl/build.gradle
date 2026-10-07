@@ -1,0 +1,26 @@
+plugins {
+  id("application")
+}
+
+group "com.c0x12c.redlab.labctl"
+version "1.0-SNAPSHOT"
+
+// tool:labctl: the lab controller and its CLI. `labctl daemon` keeps every service in the desired
+// fault state and runs in the control container; the other verbs edit the state file the daemon
+// reads, and `labctl quiz` needs no running lab at all. Plain Kotlin, no framework.
+dependencies {
+  implementation(libs.kotlin.stdlib)
+  implementation(project(":core:module-logging"))
+
+  implementation(libs.jackson.databind)
+  implementation(libs.jackson.module.kotlin)
+  implementation(libs.networking.okhttp)
+  implementation(libs.docker.java.transport)
+  implementation(libs.docker.java.transport.zerodep)
+  implementation(libs.logging.logback.classic)
+}
+
+application {
+  mainClass.set("com.c0x12c.redlab.labctl.Main")
+  applicationName = "labctl"
+}

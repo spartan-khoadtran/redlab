@@ -1,0 +1,8 @@
+.env
+.DS_Store
+.idea/
+*.iml
+
+service/.gradle/
+service/.kotlin/
+service/**/build/

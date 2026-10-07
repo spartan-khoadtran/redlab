@@ -1,0 +1,83 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
+plugins {
+  alias(libs.plugins.kotlin.jvm)
+  alias(libs.plugins.ktlint) apply false
+  alias(libs.plugins.ksp) apply false
+}
+
+// 21, not 17: the lab services block on JDBC and on in-process gates for every request, and the
+// BLOCKING executor runs on virtual threads only from 21. On 17 a saturated pool would mean
+// hundreds of parked platform threads inside a 512 MB container.
+def javaToolchainVersion = 21
+def linterVersion = "1.5.0"
+
+subprojects { p ->
+  apply(plugin: "kotlin")
+  apply(plugin: "org.jlleitschuh.gradle.ktlint")
+
+  jar {
+    archiveFileName = "${p.parent.name}-${p.name}.jar"
+  }
+
+  repositories {
+    mavenCentral()
+  }
+
+  java {
+    toolchain {
+      languageVersion = JavaLanguageVersion.of(javaToolchainVersion)
+    }
+  }
+
+  kotlin {
+    jvmToolchain(javaToolchainVersion)
+  }
+
+  tasks.withType(KotlinCompile).configureEach {
+    compilerOptions {
+      jvmTarget.set(JvmTarget.fromTarget(javaToolchainVersion.toString()))
+      suppressWarnings.set(true)
+    }
+  }
+
+  dependencies {
+    testImplementation(libs.testing.jupiter)
+    testImplementation(libs.testing.assertk)
+    testImplementation(libs.testing.mockk)
+
+    testRuntimeOnly(libs.testing.junit.platform.launcher)
+  }
+
+  tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+    testLogging {
+      events "failed"
+      exceptionFormat "short"
+      showStandardStreams = false
+    }
+    maxParallelForks = Math.max(1, Runtime.runtime.availableProcessors().intdiv(2))
+  }
+
+  ktlint {
+    version = linterVersion
+    debug = false
+    outputToConsole = true
+    android = false
+    outputColorName = "RED"
+    verbose = false
+
+    filter {
+      exclude { entry ->
+        def path = entry.file.toString().replace("\\", "/")
+        path.contains("generated") || path.contains("/core/module-logging/")
+      }
+    }
+  }
+}
+
+wrapper {
+  gradleVersion = "9.4.0"
+  distributionType = Wrapper.DistributionType.ALL
+}

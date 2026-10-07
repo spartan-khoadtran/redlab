@@ -1,0 +1,6 @@
+// Request and response DTOs plus the Retrofit client for the pricing service. Jackson shapes only:
+// the server side (api:pricing) and the caller (module-checkout impl) compile against the same types.
+dependencies {
+  api(libs.networking.retrofit)
+  api(libs.jackson.databind)
+}

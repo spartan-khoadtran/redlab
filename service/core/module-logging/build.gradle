@@ -1,0 +1,8 @@
+dependencies {
+  implementation(libs.logging.slf4j)
+  implementation(libs.logging.logback.logstash.encoder)
+  // runtimeOnly: no source names janino. Logback loads it reflectively to evaluate the <if>
+  // conditions in logback-base.xml, and without it those blocks are skipped silently.
+  runtimeOnly(libs.compiler.janino)
+  testImplementation(libs.logging.logback.classic)
+}

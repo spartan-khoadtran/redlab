@@ -1,0 +1,12 @@
+**/build/**/*
+**/bin/**/*
+
+.idea/
+.kotlin/
+.gradle/
+**/.gradle/**/*
+**/out/
+
+.DS_STORE
+*.sw[p|o]
+.java-version

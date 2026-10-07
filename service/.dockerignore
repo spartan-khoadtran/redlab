@@ -1,0 +1,8 @@
+**/build/
+**/.gradle/
+.gradle/
+.idea/
+.kotlin/
+**/src/test/
+*.md
+.DS_Store

@@ -1,0 +1,4 @@
+// The fault flag registry: baseline defaults per service plus the overrides the lab controller
+// pushes through /admin/faults. Framework free; shared/module-infra exposes it over HTTP.
+dependencies {
+}

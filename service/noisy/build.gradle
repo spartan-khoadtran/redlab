@@ -1,0 +1,33 @@
+plugins {
+  id("application")
+  alias(libs.plugins.ksp)
+}
+
+group "com.c0x12c.redlab.noisy"
+version "1.0-SNAPSHOT"
+
+// noisy: a batch job sharing the same machine. Idle unless an exercise turns its burners
+// on; compose gives it a high CPU weight so it wins most of the host when it runs.
+dependencies {
+  implementation(libs.kotlin.stdlib)
+
+  implementation(project(":shared:module-infra"))
+  implementation(project(":core:module-faults"))
+  implementation(project(":core:module-logging"))
+
+  implementation(mn.micronaut.kotlin.runtime)
+  implementation(mn.micronaut.runtime)
+  implementation(mn.micronaut.http.server.netty)
+  implementation(mn.micronaut.jackson.databind)
+  implementation(mn.micronaut.inject)
+  ksp(mn.micronaut.inject.kotlin)
+
+  implementation(libs.jackson.module.kotlin)
+  implementation(libs.logging.logback.classic)
+  runtimeOnly(libs.utility.snakeyaml)
+}
+
+application {
+  mainClass.set("com.c0x12c.redlab.noisy.Main")
+  applicationName = "noisy"
+}

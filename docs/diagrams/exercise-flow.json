@@ -1,0 +1,223 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "How an exercise runs",
+    "output": "exercise-flow.html",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Your step"
+        },
+        "backend": {
+          "label": "labctl"
+        },
+        "security": {
+          "label": "Fault injection"
+        },
+        "messagebus": {
+          "label": "Optional command"
+        },
+        "external": {
+          "label": "Setup"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "learner",
+      "label": "You (terminal + Grafana)"
+    },
+    {
+      "id": "lab",
+      "label": "The lab (labctl)"
+    },
+    {
+      "id": "optional",
+      "label": "Optional",
+      "variant": "exception"
+    }
+  ],
+  "phases": [
+    {
+      "id": "setup",
+      "label": "Start",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "inject",
+      "label": "Inject",
+      "fromCol": 2,
+      "toCol": 3,
+      "variant": "emphasis"
+    },
+    {
+      "id": "solve",
+      "label": "Investigate + answer",
+      "fromCol": 4,
+      "toCol": 5,
+      "variant": "dashed"
+    }
+  ],
+  "mainPath": [
+    "up",
+    "new",
+    "pick",
+    "apply",
+    "investigate",
+    "answer",
+    "score"
+  ],
+  "nodes": [
+    {
+      "id": "up",
+      "lane": "learner",
+      "col": 0,
+      "type": "external",
+      "label": "make up",
+      "sublabel": "build + baseline",
+      "width": 132
+    },
+    {
+      "id": "new",
+      "lane": "learner",
+      "col": 1,
+      "type": "frontend",
+      "label": "make new",
+      "sublabel": "LEVEL / TOPIC / ID",
+      "width": 132
+    },
+    {
+      "id": "pick",
+      "lane": "lab",
+      "col": 2,
+      "type": "backend",
+      "label": "Pick scenario",
+      "sublabel": "random params",
+      "tag": "state.json",
+      "width": 132
+    },
+    {
+      "id": "apply",
+      "lane": "lab",
+      "col": 3,
+      "type": "security",
+      "label": "Inject fault",
+      "sublabel": "PUT /admin/faults",
+      "tag": "every 3 s",
+      "width": 132
+    },
+    {
+      "id": "investigate",
+      "lane": "learner",
+      "col": 4,
+      "type": "frontend",
+      "label": "Investigate",
+      "sublabel": "RED + USE",
+      "width": 132
+    },
+    {
+      "id": "answer",
+      "lane": "learner",
+      "col": 5,
+      "type": "frontend",
+      "label": "make answer",
+      "sublabel": "nature, location, cause",
+      "width": 132
+    },
+    {
+      "id": "score",
+      "lane": "lab",
+      "col": 5,
+      "type": "backend",
+      "label": "Score + explain",
+      "sublabel": "max 4 points",
+      "tag": "PromQL evidence",
+      "width": 132
+    },
+    {
+      "id": "hint",
+      "lane": "optional",
+      "col": 4,
+      "type": "messagebus",
+      "label": "make hint",
+      "sublabel": "-0.5 point each",
+      "width": 132
+    }
+  ],
+  "edges": [
+    {
+      "id": "up-new",
+      "from": "up",
+      "to": "new"
+    },
+    {
+      "id": "new-pick",
+      "from": "new",
+      "to": "pick",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pick-apply",
+      "from": "pick",
+      "to": "apply",
+      "label": "active exercise",
+      "variant": "emphasis"
+    },
+    {
+      "id": "apply-investigate",
+      "from": "apply",
+      "to": "investigate",
+      "label": "symptoms",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "left"
+    },
+    {
+      "id": "investigate-answer",
+      "from": "investigate",
+      "to": "answer",
+      "fromSide": "right",
+      "toSide": "left",
+      "route": "straight"
+    },
+    {
+      "id": "answer-score",
+      "from": "answer",
+      "to": "score",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ask-hint",
+      "from": "investigate",
+      "to": "hint",
+      "label": "stuck?",
+      "variant": "dashed",
+      "role": "branch"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "One round",
+      "items": [
+        "make new picks a scenario you did not play in the last 5",
+        "The daemon applies its faults within 3 s",
+        "You find the problem with RED and USE, then submit"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Scoring",
+      "items": [
+        "Nature 1, location 1, cause 2 (partial cause 1)",
+        "Each hint costs 0.5 point",
+        "make reveal shows the answer with no score",
+        "After the score, Enter clears the fault"
+      ]
+    }
+  ]
+}

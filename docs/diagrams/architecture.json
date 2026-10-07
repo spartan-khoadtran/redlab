@@ -1,0 +1,341 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "redlab architecture",
+    "output": "architecture.html",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    {
+      "id": "control",
+      "type": "security",
+      "label": "control",
+      "sublabel": "labctl daemon",
+      "tag": "every 3 s",
+      "pos": [
+        260,
+        50
+      ],
+      "size": [
+        140,
+        70
+      ]
+    },
+    {
+      "id": "prometheus",
+      "type": "database",
+      "label": "Prometheus",
+      "sublabel": ":9090",
+      "pos": [
+        480,
+        50
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "grafana",
+      "type": "frontend",
+      "label": "Grafana",
+      "sublabel": ":3000",
+      "pos": [
+        700,
+        50
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "tempo",
+      "type": "frontend",
+      "label": "Tempo",
+      "sublabel": "traces",
+      "pos": [
+        920,
+        50
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "loadgen",
+      "type": "external",
+      "label": "loadgen",
+      "sublabel": "~50 rps per tenant",
+      "pos": [
+        40,
+        260
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "envoy",
+      "type": "cloud",
+      "label": "Envoy",
+      "sublabel": "LB :8080",
+      "pos": [
+        260,
+        260
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "api",
+      "sublabel": "checkout :8000",
+      "pos": [
+        480,
+        260
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "kafka",
+      "type": "messagebus",
+      "label": "Kafka",
+      "sublabel": "topic orders",
+      "pos": [
+        700,
+        260
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "worker",
+      "type": "backend",
+      "label": "worker",
+      "sublabel": "order-worker",
+      "pos": [
+        920,
+        260
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "redis",
+      "type": "database",
+      "label": "Redis",
+      "sublabel": "product cache",
+      "pos": [
+        260,
+        450
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "postgres",
+      "type": "database",
+      "label": "Postgres",
+      "sublabel": "orders, products",
+      "pos": [
+        480,
+        450
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "pricing",
+      "type": "backend",
+      "label": "pricing",
+      "sublabel": ":8001",
+      "pos": [
+        700,
+        450
+      ],
+      "size": [
+        140,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Checkout system (fault targets)",
+      "wraps": [
+        "envoy",
+        "api",
+        "kafka",
+        "worker",
+        "redis",
+        "postgres",
+        "pricing"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Observability",
+      "wraps": [
+        "prometheus",
+        "grafana",
+        "tempo"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "load",
+      "from": "loadgen",
+      "to": "envoy",
+      "label": "HTTP",
+      "variant": "emphasis"
+    },
+    {
+      "id": "proxy",
+      "from": "envoy",
+      "to": "api",
+      "variant": "emphasis"
+    },
+    {
+      "id": "produce",
+      "from": "api",
+      "to": "kafka",
+      "label": "produce",
+      "variant": "emphasis"
+    },
+    {
+      "id": "consume",
+      "from": "kafka",
+      "to": "worker",
+      "label": "consume"
+    },
+    {
+      "id": "cache",
+      "from": "api",
+      "to": "redis",
+      "label": "cache",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "sql",
+      "from": "api",
+      "to": "postgres",
+      "label": "SQL",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        550,
+        418
+      ]
+    },
+    {
+      "id": "price",
+      "from": "api",
+      "to": "pricing",
+      "label": "/price",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "mark",
+      "from": "worker",
+      "to": "postgres",
+      "label": "mark processed",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    },
+    {
+      "id": "faults",
+      "from": "control",
+      "to": "api",
+      "label": "PUT /admin/faults",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "scrape",
+      "from": "prometheus",
+      "to": "api",
+      "label": "scrape",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "promql",
+      "from": "grafana",
+      "to": "prometheus",
+      "label": "PromQL",
+      "variant": "dashed"
+    },
+    {
+      "id": "spans",
+      "from": "worker",
+      "to": "tempo",
+      "label": "OTLP spans",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "traceql",
+      "from": "grafana",
+      "to": "tempo",
+      "label": "TraceQL",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Request path",
+      "items": [
+        "loadgen sends checkout traffic through Envoy to api",
+        "api reads Redis and Postgres, calls pricing, then writes to Kafka",
+        "worker consumes orders and marks them done in Postgres"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Fault loop",
+      "items": [
+        "control reads the active exercise from state.json",
+        "Every 3 s it PUTs faults to every service and sets the api CPU limit",
+        "A manual change is reverted on the next tick"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "What you look at",
+      "items": [
+        "Prometheus scrapes /metrics on every service",
+        "Every service sends spans to Tempo",
+        "Grafana shows RED and USE dashboards and the traces",
+        "An exemplar dot on a latency panel opens its trace"
+      ]
+    }
+  ]
+}

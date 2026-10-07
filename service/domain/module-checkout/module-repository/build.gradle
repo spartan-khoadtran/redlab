@@ -1,0 +1,17 @@
+plugins {
+  alias(libs.plugins.ksp)
+}
+
+// The SQL the lab sends to Postgres, one named statement each, timed and traced per call. Raw JDBC
+// on purpose: pgobserver names queries by the /* q=name */ comment pg_stat_statements keeps, and
+// the product_detail query is deliberately expensive (no index on reviews.product_id).
+dependencies {
+  implementation(project(":domain:module-checkout:module-api"))
+  implementation(project(":core:module-database"))
+  implementation(project(":core:module-metrics"))
+  implementation(project(":core:module-tracing"))
+
+  implementation(mn.micronaut.inject)
+  implementation(mn.micronaut.context)
+  ksp(mn.micronaut.inject.kotlin)
+}

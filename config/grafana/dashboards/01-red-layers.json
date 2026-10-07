@@ -1,0 +1,2041 @@
+{
+  "uid" : "red-layers",
+  "title" : "01 · RED by layer",
+  "description" : "Rate, Errors, Duration at each layer, following the request path: client -> LB -> api -> downstream -> async.",
+  "tags" : [
+    "lab"
+  ],
+  "timezone" : "browser",
+  "schemaVersion" : 39,
+  "version" : 1,
+  "editable" : true,
+  "refresh" : "5s",
+  "time" : {
+    "from" : "now-30m",
+    "to" : "now"
+  },
+  "links" : [
+    {
+      "type" : "dashboards",
+      "tags" : [
+        "lab"
+      ],
+      "title" : "Lab",
+      "asDropdown" : false,
+      "includeVars" : false,
+      "keepTime" : true
+    }
+  ],
+  "annotations" : {
+    "list" : [
+      {
+        "builtIn" : 1,
+        "datasource" : {
+          "type" : "grafana",
+          "uid" : "-- Grafana --"
+        },
+        "enable" : true,
+        "hide" : true,
+        "iconColor" : "rgba(0, 211, 255, 1)",
+        "name" : "Annotations & Alerts",
+        "type" : "dashboard"
+      },
+      {
+        "datasource" : {
+          "type" : "grafana",
+          "uid" : "-- Grafana --"
+        },
+        "enable" : true,
+        "hide" : false,
+        "iconColor" : "orange",
+        "name" : "Lab: deploy / config change",
+        "target" : {
+          "type" : "tags",
+          "tags" : [
+            "lab"
+          ],
+          "limit" : 100,
+          "matchAny" : true
+        }
+      }
+    ]
+  },
+  "templating" : {
+    "list" : [ ]
+  },
+  "panels" : [
+    {
+      "type" : "text",
+      "title" : "",
+      "id" : 1,
+      "gridPos" : {
+        "x" : 0,
+        "y" : 0,
+        "w" : 24,
+        "h" : 2
+      },
+      "options" : {
+        "mode" : "markdown",
+        "content" : "**Read top to bottom along the request path.** The first layer whose numbers drift is where to dig. The orange line on the charts is a change event (deploy, config). Commands: `make new` · `make hint` · `make answer`"
+      }
+    },
+    {
+      "type" : "row",
+      "title" : "1 · Client (loadgen): what users see",
+      "collapsed" : false,
+      "id" : 2,
+      "gridPos" : {
+        "x" : 0,
+        "y" : 2,
+        "w" : 24,
+        "h" : 1
+      },
+      "panels" : [ ]
+    },
+    {
+      "type" : "timeseries",
+      "title" : "User requests/s by outcome",
+      "description" : "Each logical user request, after retries. timeout and conn_error are errors only the client sees.",
+      "id" : 3,
+      "datasource" : {
+        "type" : "prometheus",
+        "uid" : "prometheus"
+      },
+      "gridPos" : {
+        "x" : 0,
+        "y" : 3,
+        "w" : 8,
+        "h" : 8
+      },
+      "targets" : [
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "sum by (outcome) (rate(client_requests_total[$__rate_interval]))",
+          "legendFormat" : "{{outcome}}",
+          "refId" : "A",
+          "exemplar" : false
+        }
+      ],
+      "fieldConfig" : {
+        "defaults" : {
+          "unit" : "reqps",
+          "custom" : {
+            "lineWidth" : 1,
+            "fillOpacity" : 0,
+            "showPoints" : "never",
+            "spanNulls" : true,
+            "stacking" : {
+              "mode" : "none"
+            }
+          },
+          "min" : 0
+        },
+        "overrides" : [ ]
+      },
+      "options" : {
+        "legend" : {
+          "displayMode" : "list",
+          "placement" : "bottom",
+          "showLegend" : true
+        },
+        "tooltip" : {
+          "mode" : "multi",
+          "sort" : "desc"
+        }
+      }
+    },
+    {
+      "type" : "timeseries",
+      "title" : "Error rate users see",
+      "description" : "",
+      "id" : 4,
+      "datasource" : {
+        "type" : "prometheus",
+        "uid" : "prometheus"
+      },
+      "gridPos" : {
+        "x" : 8,
+        "y" : 3,
+        "w" : 8,
+        "h" : 8
+      },
+      "targets" : [
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "100 * (sum(rate(client_requests_total{outcome!~\"ok|http_4xx\"}[$__rate_interval])) or vector(0)) / sum(rate(client_requests_total[$__rate_interval]))",
+          "legendFormat" : "error %",
+          "refId" : "A",
+          "exemplar" : false
+        }
+      ],
+      "fieldConfig" : {
+        "defaults" : {
+          "unit" : "percent",
+          "custom" : {
+            "lineWidth" : 1,
+            "fillOpacity" : 0,
+            "showPoints" : "never",
+            "spanNulls" : true,
+            "stacking" : {
+              "mode" : "none"
+            }
+          },
+          "min" : 0
+        },
+        "overrides" : [ ]
+      },
+      "options" : {
+        "legend" : {
+          "displayMode" : "list",
+          "placement" : "bottom",
+          "showLegend" : true
+        },
+        "tooltip" : {
+          "mode" : "multi",
+          "sort" : "desc"
+        }
+      }
+    },
+    {
+      "type" : "timeseries",
+      "title" : "Latency users see",
+      "description" : "",
+      "id" : 5,
+      "datasource" : {
+        "type" : "prometheus",
+        "uid" : "prometheus"
+      },
+      "gridPos" : {
+        "x" : 16,
+        "y" : 3,
+        "w" : 8,
+        "h" : 8
+      },
+      "targets" : [
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "histogram_quantile(0.5, sum by (le) (rate(client_duration_seconds_bucket[$__rate_interval])))",
+          "legendFormat" : "p50",
+          "refId" : "A",
+          "exemplar" : true
+        },
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "histogram_quantile(0.95, sum by (le) (rate(client_duration_seconds_bucket[$__rate_interval])))",
+          "legendFormat" : "p95",
+          "refId" : "B",
+          "exemplar" : true
+        },
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "histogram_quantile(0.99, sum by (le) (rate(client_duration_seconds_bucket[$__rate_interval])))",
+          "legendFormat" : "p99",
+          "refId" : "C",
+          "exemplar" : true
+        }
+      ],
+      "fieldConfig" : {
+        "defaults" : {
+          "unit" : "s",
+          "custom" : {
+            "lineWidth" : 1,
+            "fillOpacity" : 0,
+            "showPoints" : "never",
+            "spanNulls" : true,
+            "stacking" : {
+              "mode" : "none"
+            }
+          },
+          "min" : 0
+        },
+        "overrides" : [ ]
+      },
+      "options" : {
+        "legend" : {
+          "displayMode" : "list",
+          "placement" : "bottom",
+          "showLegend" : true
+        },
+        "tooltip" : {
+          "mode" : "multi",
+          "sort" : "desc"
+        }
+      }
+    },
+    {
+      "type" : "timeseries",
+      "title" : "Requests/s by tenant",
+      "description" : "Workload characterization: who is causing the load?",
+      "id" : 6,
+      "datasource" : {
+        "type" : "prometheus",
+        "uid" : "prometheus"
+      },
+      "gridPos" : {
+        "x" : 0,
+        "y" : 11,
+        "w" : 8,
+        "h" : 8
+      },
+      "targets" : [
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "sum by (tenant) (rate(client_requests_total[$__rate_interval]))",
+          "legendFormat" : "{{tenant}}",
+          "refId" : "A",
+          "exemplar" : false
+        }
+      ],
+      "fieldConfig" : {
+        "defaults" : {
+          "unit" : "reqps",
+          "custom" : {
+            "lineWidth" : 1,
+            "fillOpacity" : 0,
+            "showPoints" : "never",
+            "spanNulls" : true,
+            "stacking" : {
+              "mode" : "none"
+            }
+          },
+          "min" : 0
+        },
+        "overrides" : [ ]
+      },
+      "options" : {
+        "legend" : {
+          "displayMode" : "list",
+          "placement" : "bottom",
+          "showLegend" : true
+        },
+        "tooltip" : {
+          "mode" : "multi",
+          "sort" : "desc"
+        }
+      }
+    },
+    {
+      "type" : "timeseries",
+      "title" : "Attempts vs user requests",
+      "description" : "When the two lines split, the client is retrying.",
+      "id" : 7,
+      "datasource" : {
+        "type" : "prometheus",
+        "uid" : "prometheus"
+      },
+      "gridPos" : {
+        "x" : 8,
+        "y" : 11,
+        "w" : 8,
+        "h" : 8
+      },
+      "targets" : [
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "sum(rate(client_attempts_total[$__rate_interval]))",
+          "legendFormat" : "attempts sent",
+          "refId" : "A",
+          "exemplar" : false
+        },
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "sum(rate(client_requests_total[$__rate_interval]))",
+          "legendFormat" : "user requests",
+          "refId" : "B",
+          "exemplar" : false
+        }
+      ],
+      "fieldConfig" : {
+        "defaults" : {
+          "unit" : "reqps",
+          "custom" : {
+            "lineWidth" : 1,
+            "fillOpacity" : 0,
+            "showPoints" : "never",
+            "spanNulls" : true,
+            "stacking" : {
+              "mode" : "none"
+            }
+          },
+          "min" : 0
+        },
+        "overrides" : [ ]
+      },
+      "options" : {
+        "legend" : {
+          "displayMode" : "list",
+          "placement" : "bottom",
+          "showLegend" : true
+        },
+        "tooltip" : {
+          "mode" : "multi",
+          "sort" : "desc"
+        }
+      }
+    },
+    {
+      "type" : "timeseries",
+      "title" : "p99 by endpoint (client)",
+      "description" : "",
+      "id" : 8,
+      "datasource" : {
+        "type" : "prometheus",
+        "uid" : "prometheus"
+      },
+      "gridPos" : {
+        "x" : 16,
+        "y" : 11,
+        "w" : 8,
+        "h" : 8
+      },
+      "targets" : [
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "histogram_quantile(0.99, sum by (le, endpoint) (rate(client_duration_seconds_bucket[$__rate_interval])))",
+          "legendFormat" : "{{endpoint}}",
+          "refId" : "A",
+          "exemplar" : true
+        }
+      ],
+      "fieldConfig" : {
+        "defaults" : {
+          "unit" : "s",
+          "custom" : {
+            "lineWidth" : 1,
+            "fillOpacity" : 0,
+            "showPoints" : "never",
+            "spanNulls" : true,
+            "stacking" : {
+              "mode" : "none"
+            }
+          },
+          "min" : 0
+        },
+        "overrides" : [ ]
+      },
+      "options" : {
+        "legend" : {
+          "displayMode" : "list",
+          "placement" : "bottom",
+          "showLegend" : true
+        },
+        "tooltip" : {
+          "mode" : "multi",
+          "sort" : "desc"
+        }
+      }
+    },
+    {
+      "type" : "row",
+      "title" : "2 · Load balancer (Envoy)",
+      "collapsed" : false,
+      "id" : 9,
+      "gridPos" : {
+        "x" : 0,
+        "y" : 19,
+        "w" : 24,
+        "h" : 1
+      },
+      "panels" : [ ]
+    },
+    {
+      "type" : "timeseries",
+      "title" : "Requests/s at the LB",
+      "description" : "",
+      "id" : 10,
+      "datasource" : {
+        "type" : "prometheus",
+        "uid" : "prometheus"
+      },
+      "gridPos" : {
+        "x" : 0,
+        "y" : 20,
+        "w" : 8,
+        "h" : 8
+      },
+      "targets" : [
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "sum(rate(envoy_http_downstream_rq_total{envoy_http_conn_manager_prefix=\"ingress\"}[$__rate_interval]))",
+          "legendFormat" : "LB received",
+          "refId" : "A",
+          "exemplar" : false
+        }
+      ],
+      "fieldConfig" : {
+        "defaults" : {
+          "unit" : "reqps",
+          "custom" : {
+            "lineWidth" : 1,
+            "fillOpacity" : 0,
+            "showPoints" : "never",
+            "spanNulls" : true,
+            "stacking" : {
+              "mode" : "none"
+            }
+          },
+          "min" : 0
+        },
+        "overrides" : [ ]
+      },
+      "options" : {
+        "legend" : {
+          "displayMode" : "list",
+          "placement" : "bottom",
+          "showLegend" : true
+        },
+        "tooltip" : {
+          "mode" : "multi",
+          "sort" : "desc"
+        }
+      }
+    },
+    {
+      "type" : "timeseries",
+      "title" : "5xx at the LB vs 5xx api records itself",
+      "description" : "Envoy counts the 503s it generates itself in upstream_rq_5xx, so compare with the errors api counts.",
+      "id" : 11,
+      "datasource" : {
+        "type" : "prometheus",
+        "uid" : "prometheus"
+      },
+      "gridPos" : {
+        "x" : 8,
+        "y" : 20,
+        "w" : 8,
+        "h" : 8
+      },
+      "targets" : [
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "sum(rate(envoy_http_downstream_rq_xx{envoy_http_conn_manager_prefix=\"ingress\",envoy_response_code_class=\"5\"}[$__rate_interval])) or vector(0)",
+          "legendFormat" : "5xx LB returns to clients",
+          "refId" : "A",
+          "exemplar" : false
+        },
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "sum(rate(http_server_requests_total{job=\"api\",status=~\"5..\"}[$__rate_interval])) or vector(0)",
+          "legendFormat" : "5xx api records itself",
+          "refId" : "B",
+          "exemplar" : false
+        },
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "sum(rate(envoy_cluster_upstream_cx_none_healthy{envoy_cluster_name=\"api\"}[$__rate_interval])) or vector(0)",
+          "legendFormat" : "LB rejected: no healthy backend",
+          "refId" : "C",
+          "exemplar" : false
+        }
+      ],
+      "fieldConfig" : {
+        "defaults" : {
+          "unit" : "reqps",
+          "custom" : {
+            "lineWidth" : 1,
+            "fillOpacity" : 0,
+            "showPoints" : "never",
+            "spanNulls" : true,
+            "stacking" : {
+              "mode" : "none"
+            }
+          },
+          "min" : 0
+        },
+        "overrides" : [ ]
+      },
+      "options" : {
+        "legend" : {
+          "displayMode" : "list",
+          "placement" : "bottom",
+          "showLegend" : true
+        },
+        "tooltip" : {
+          "mode" : "multi",
+          "sort" : "desc"
+        }
+      }
+    },
+    {
+      "type" : "timeseries",
+      "title" : "Latency p99: LB vs api",
+      "description" : "The gap between the two lines is time spent in between: network, the queue ahead of the app.",
+      "id" : 12,
+      "datasource" : {
+        "type" : "prometheus",
+        "uid" : "prometheus"
+      },
+      "gridPos" : {
+        "x" : 16,
+        "y" : 20,
+        "w" : 8,
+        "h" : 8
+      },
+      "targets" : [
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "histogram_quantile(0.99, sum by (le) (rate(envoy_http_downstream_rq_time_bucket{envoy_http_conn_manager_prefix=\"ingress\"}[$__rate_interval]))) / 1000",
+          "legendFormat" : "LB (Envoy) p99",
+          "refId" : "A",
+          "exemplar" : true
+        },
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "histogram_quantile(0.99, sum by (le) (rate(http_server_duration_seconds_bucket{job=\"api\"}[$__rate_interval])))",
+          "legendFormat" : "api (APM) p99",
+          "refId" : "B",
+          "exemplar" : true
+        }
+      ],
+      "fieldConfig" : {
+        "defaults" : {
+          "unit" : "s",
+          "custom" : {
+            "lineWidth" : 1,
+            "fillOpacity" : 0,
+            "showPoints" : "never",
+            "spanNulls" : true,
+            "stacking" : {
+              "mode" : "none"
+            }
+          },
+          "min" : 0
+        },
+        "overrides" : [ ]
+      },
+      "options" : {
+        "legend" : {
+          "displayMode" : "list",
+          "placement" : "bottom",
+          "showLegend" : true
+        },
+        "tooltip" : {
+          "mode" : "multi",
+          "sort" : "desc"
+        }
+      }
+    },
+    {
+      "type" : "timeseries",
+      "title" : "Healthy backends per Envoy",
+      "description" : "",
+      "id" : 13,
+      "datasource" : {
+        "type" : "prometheus",
+        "uid" : "prometheus"
+      },
+      "gridPos" : {
+        "x" : 0,
+        "y" : 28,
+        "w" : 8,
+        "h" : 8
+      },
+      "targets" : [
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "envoy_cluster_membership_healthy{envoy_cluster_name=\"api\"}",
+          "legendFormat" : "healthy backends",
+          "refId" : "A",
+          "exemplar" : false
+        },
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "envoy_cluster_membership_total{envoy_cluster_name=\"api\"}",
+          "legendFormat" : "total backends",
+          "refId" : "B",
+          "exemplar" : false
+        }
+      ],
+      "fieldConfig" : {
+        "defaults" : {
+          "unit" : "short",
+          "custom" : {
+            "lineWidth" : 1,
+            "fillOpacity" : 0,
+            "showPoints" : "never",
+            "spanNulls" : true,
+            "stacking" : {
+              "mode" : "none"
+            }
+          },
+          "min" : 0
+        },
+        "overrides" : [ ]
+      },
+      "options" : {
+        "legend" : {
+          "displayMode" : "list",
+          "placement" : "bottom",
+          "showLegend" : true
+        },
+        "tooltip" : {
+          "mode" : "multi",
+          "sort" : "desc"
+        }
+      }
+    },
+    {
+      "type" : "timeseries",
+      "title" : "Connections to api failing",
+      "description" : "",
+      "id" : 14,
+      "datasource" : {
+        "type" : "prometheus",
+        "uid" : "prometheus"
+      },
+      "gridPos" : {
+        "x" : 8,
+        "y" : 28,
+        "w" : 8,
+        "h" : 8
+      },
+      "targets" : [
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "rate(envoy_cluster_upstream_cx_connect_fail{envoy_cluster_name=\"api\"}[$__rate_interval])",
+          "legendFormat" : "connect fail/s",
+          "refId" : "A",
+          "exemplar" : false
+        },
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "rate(envoy_cluster_upstream_rq_timeout{envoy_cluster_name=\"api\"}[$__rate_interval])",
+          "legendFormat" : "timeout/s",
+          "refId" : "B",
+          "exemplar" : false
+        }
+      ],
+      "fieldConfig" : {
+        "defaults" : {
+          "unit" : "short",
+          "custom" : {
+            "lineWidth" : 1,
+            "fillOpacity" : 0,
+            "showPoints" : "never",
+            "spanNulls" : true,
+            "stacking" : {
+              "mode" : "none"
+            }
+          },
+          "min" : 0
+        },
+        "overrides" : [ ]
+      },
+      "options" : {
+        "legend" : {
+          "displayMode" : "list",
+          "placement" : "bottom",
+          "showLegend" : true
+        },
+        "tooltip" : {
+          "mode" : "multi",
+          "sort" : "desc"
+        }
+      }
+    },
+    {
+      "type" : "row",
+      "title" : "3 · api (APM): from the moment the handler starts",
+      "collapsed" : false,
+      "id" : 15,
+      "gridPos" : {
+        "x" : 0,
+        "y" : 36,
+        "w" : 24,
+        "h" : 1
+      },
+      "panels" : [ ]
+    },
+    {
+      "type" : "timeseries",
+      "title" : "Requests/s by route and status",
+      "description" : "",
+      "id" : 16,
+      "datasource" : {
+        "type" : "prometheus",
+        "uid" : "prometheus"
+      },
+      "gridPos" : {
+        "x" : 0,
+        "y" : 37,
+        "w" : 8,
+        "h" : 8
+      },
+      "targets" : [
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "sum by (route, status) (rate(http_server_requests_total{job=\"api\"}[$__rate_interval]))",
+          "legendFormat" : "{{route}} {{status}}",
+          "refId" : "A",
+          "exemplar" : false
+        }
+      ],
+      "fieldConfig" : {
+        "defaults" : {
+          "unit" : "reqps",
+          "custom" : {
+            "lineWidth" : 1,
+            "fillOpacity" : 0,
+            "showPoints" : "never",
+            "spanNulls" : true,
+            "stacking" : {
+              "mode" : "none"
+            }
+          },
+          "min" : 0
+        },
+        "overrides" : [ ]
+      },
+      "options" : {
+        "legend" : {
+          "displayMode" : "list",
+          "placement" : "bottom",
+          "showLegend" : true
+        },
+        "tooltip" : {
+          "mode" : "multi",
+          "sort" : "desc"
+        }
+      }
+    },
+    {
+      "type" : "timeseries",
+      "title" : "Error rate by route",
+      "description" : "",
+      "id" : 17,
+      "datasource" : {
+        "type" : "prometheus",
+        "uid" : "prometheus"
+      },
+      "gridPos" : {
+        "x" : 8,
+        "y" : 37,
+        "w" : 8,
+        "h" : 8
+      },
+      "targets" : [
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "100 * (sum by (route) (rate(http_server_requests_total{job=\"api\",status=~\"5..\"}[$__rate_interval])) or 0 * sum by (route) (rate(http_server_requests_total{job=\"api\"}[$__rate_interval]))) / sum by (route) (rate(http_server_requests_total{job=\"api\"}[$__rate_interval]))",
+          "legendFormat" : "{{route}}",
+          "refId" : "A",
+          "exemplar" : false
+        }
+      ],
+      "fieldConfig" : {
+        "defaults" : {
+          "unit" : "percent",
+          "custom" : {
+            "lineWidth" : 1,
+            "fillOpacity" : 0,
+            "showPoints" : "never",
+            "spanNulls" : true,
+            "stacking" : {
+              "mode" : "none"
+            }
+          },
+          "min" : 0
+        },
+        "overrides" : [ ]
+      },
+      "options" : {
+        "legend" : {
+          "displayMode" : "list",
+          "placement" : "bottom",
+          "showLegend" : true
+        },
+        "tooltip" : {
+          "mode" : "multi",
+          "sort" : "desc"
+        }
+      }
+    },
+    {
+      "type" : "timeseries",
+      "title" : "p99 by route",
+      "description" : "",
+      "id" : 18,
+      "datasource" : {
+        "type" : "prometheus",
+        "uid" : "prometheus"
+      },
+      "gridPos" : {
+        "x" : 16,
+        "y" : 37,
+        "w" : 8,
+        "h" : 8
+      },
+      "targets" : [
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "histogram_quantile(0.99, sum by (le, route) (rate(http_server_duration_seconds_bucket{job=\"api\"}[$__rate_interval])))",
+          "legendFormat" : "{{route}}",
+          "refId" : "A",
+          "exemplar" : true
+        }
+      ],
+      "fieldConfig" : {
+        "defaults" : {
+          "unit" : "s",
+          "custom" : {
+            "lineWidth" : 1,
+            "fillOpacity" : 0,
+            "showPoints" : "never",
+            "spanNulls" : true,
+            "stacking" : {
+              "mode" : "none"
+            }
+          },
+          "min" : 0
+        },
+        "overrides" : [ ]
+      },
+      "options" : {
+        "legend" : {
+          "displayMode" : "list",
+          "placement" : "bottom",
+          "showLegend" : true
+        },
+        "tooltip" : {
+          "mode" : "multi",
+          "sort" : "desc"
+        }
+      }
+    },
+    {
+      "type" : "timeseries",
+      "title" : "Little's Law: measured in-flight vs rate × duration",
+      "description" : "rate(sum of durations) = λ × W = L. The two lines should stay close.",
+      "id" : 19,
+      "datasource" : {
+        "type" : "prometheus",
+        "uid" : "prometheus"
+      },
+      "gridPos" : {
+        "x" : 0,
+        "y" : 45,
+        "w" : 8,
+        "h" : 8
+      },
+      "targets" : [
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "avg_over_time(http_server_inflight{job=\"api\"}[1m])",
+          "legendFormat" : "measured in-flight",
+          "refId" : "A",
+          "exemplar" : false
+        },
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "sum(rate(http_server_duration_seconds_sum{job=\"api\"}[1m]))",
+          "legendFormat" : "rate × mean duration",
+          "refId" : "B",
+          "exemplar" : false
+        }
+      ],
+      "fieldConfig" : {
+        "defaults" : {
+          "unit" : "short",
+          "custom" : {
+            "lineWidth" : 1,
+            "fillOpacity" : 0,
+            "showPoints" : "never",
+            "spanNulls" : true,
+            "stacking" : {
+              "mode" : "none"
+            }
+          },
+          "min" : 0
+        },
+        "overrides" : [ ]
+      },
+      "options" : {
+        "legend" : {
+          "displayMode" : "list",
+          "placement" : "bottom",
+          "showLegend" : true
+        },
+        "tooltip" : {
+          "mode" : "multi",
+          "sort" : "desc"
+        }
+      }
+    },
+    {
+      "type" : "timeseries",
+      "title" : "p99 success vs error (separately)",
+      "description" : "Failed requests may be very fast (fail fast) or very slow (timeout).",
+      "id" : 20,
+      "datasource" : {
+        "type" : "prometheus",
+        "uid" : "prometheus"
+      },
+      "gridPos" : {
+        "x" : 8,
+        "y" : 45,
+        "w" : 8,
+        "h" : 8
+      },
+      "targets" : [
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "histogram_quantile(0.99, sum by (le, outcome) (rate(http_server_duration_seconds_bucket{job=\"api\"}[$__rate_interval])))",
+          "legendFormat" : "{{outcome}}",
+          "refId" : "A",
+          "exemplar" : true
+        }
+      ],
+      "fieldConfig" : {
+        "defaults" : {
+          "unit" : "s",
+          "custom" : {
+            "lineWidth" : 1,
+            "fillOpacity" : 0,
+            "showPoints" : "never",
+            "spanNulls" : true,
+            "stacking" : {
+              "mode" : "none"
+            }
+          },
+          "min" : 0
+        },
+        "overrides" : [ ]
+      },
+      "options" : {
+        "legend" : {
+          "displayMode" : "list",
+          "placement" : "bottom",
+          "showLegend" : true
+        },
+        "tooltip" : {
+          "mode" : "multi",
+          "sort" : "desc"
+        }
+      }
+    },
+    {
+      "type" : "row",
+      "title" : "4 · Downstream as seen from api",
+      "collapsed" : false,
+      "id" : 21,
+      "gridPos" : {
+        "x" : 0,
+        "y" : 53,
+        "w" : 24,
+        "h" : 1
+      },
+      "panels" : [ ]
+    },
+    {
+      "type" : "timeseries",
+      "title" : "DB session p99 (pool wait + connection held)",
+      "description" : "The 'DB span' as the app sees it: includes the wait for a connection.",
+      "id" : 22,
+      "datasource" : {
+        "type" : "prometheus",
+        "uid" : "prometheus"
+      },
+      "gridPos" : {
+        "x" : 0,
+        "y" : 54,
+        "w" : 8,
+        "h" : 8
+      },
+      "targets" : [
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "histogram_quantile(0.99, sum by (le, op) (rate(db_client_session_seconds_bucket{job=\"api\"}[$__rate_interval])))",
+          "legendFormat" : "{{op}}",
+          "refId" : "A",
+          "exemplar" : true
+        }
+      ],
+      "fieldConfig" : {
+        "defaults" : {
+          "unit" : "s",
+          "custom" : {
+            "lineWidth" : 1,
+            "fillOpacity" : 0,
+            "showPoints" : "never",
+            "spanNulls" : true,
+            "stacking" : {
+              "mode" : "none"
+            }
+          },
+          "min" : 0
+        },
+        "overrides" : [ ]
+      },
+      "options" : {
+        "legend" : {
+          "displayMode" : "list",
+          "placement" : "bottom",
+          "showLegend" : true
+        },
+        "tooltip" : {
+          "mode" : "multi",
+          "sort" : "desc"
+        }
+      }
+    },
+    {
+      "type" : "timeseries",
+      "title" : "Queries/s sent to Postgres",
+      "description" : "",
+      "id" : 23,
+      "datasource" : {
+        "type" : "prometheus",
+        "uid" : "prometheus"
+      },
+      "gridPos" : {
+        "x" : 8,
+        "y" : 54,
+        "w" : 8,
+        "h" : 8
+      },
+      "targets" : [
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "sum by (job, query) (rate(db_client_queries_total[$__rate_interval]))",
+          "legendFormat" : "{{job}} {{query}}",
+          "refId" : "A",
+          "exemplar" : false
+        }
+      ],
+      "fieldConfig" : {
+        "defaults" : {
+          "unit" : "reqps",
+          "custom" : {
+            "lineWidth" : 1,
+            "fillOpacity" : 0,
+            "showPoints" : "never",
+            "spanNulls" : true,
+            "stacking" : {
+              "mode" : "none"
+            }
+          },
+          "min" : 0
+        },
+        "overrides" : [ ]
+      },
+      "options" : {
+        "legend" : {
+          "displayMode" : "list",
+          "placement" : "bottom",
+          "showLegend" : true
+        },
+        "tooltip" : {
+          "mode" : "multi",
+          "sort" : "desc"
+        }
+      }
+    },
+    {
+      "type" : "timeseries",
+      "title" : "Mean query time as seen from the app",
+      "description" : "Excludes the pool wait. Compare with exec time in row 5.",
+      "id" : 24,
+      "datasource" : {
+        "type" : "prometheus",
+        "uid" : "prometheus"
+      },
+      "gridPos" : {
+        "x" : 16,
+        "y" : 54,
+        "w" : 8,
+        "h" : 8
+      },
+      "targets" : [
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "sum by (query) (rate(db_client_duration_seconds_sum{job=\"api\"}[$__rate_interval])) / sum by (query) (rate(db_client_duration_seconds_count{job=\"api\"}[$__rate_interval]))",
+          "legendFormat" : "{{query}}",
+          "refId" : "A",
+          "exemplar" : false
+        }
+      ],
+      "fieldConfig" : {
+        "defaults" : {
+          "unit" : "s",
+          "custom" : {
+            "lineWidth" : 1,
+            "fillOpacity" : 0,
+            "showPoints" : "never",
+            "spanNulls" : true,
+            "stacking" : {
+              "mode" : "none"
+            }
+          },
+          "min" : 0
+        },
+        "overrides" : [ ]
+      },
+      "options" : {
+        "legend" : {
+          "displayMode" : "list",
+          "placement" : "bottom",
+          "showLegend" : true
+        },
+        "tooltip" : {
+          "mode" : "multi",
+          "sort" : "desc"
+        }
+      }
+    },
+    {
+      "type" : "timeseries",
+      "title" : "Calls to pricing: p99 as seen from api",
+      "description" : "",
+      "id" : 25,
+      "datasource" : {
+        "type" : "prometheus",
+        "uid" : "prometheus"
+      },
+      "gridPos" : {
+        "x" : 0,
+        "y" : 62,
+        "w" : 8,
+        "h" : 8
+      },
+      "targets" : [
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "histogram_quantile(0.99, sum by (le, route) (rate(http_client_duration_seconds_bucket{job=\"api\"}[$__rate_interval])))",
+          "legendFormat" : "{{route}}",
+          "refId" : "A",
+          "exemplar" : true
+        }
+      ],
+      "fieldConfig" : {
+        "defaults" : {
+          "unit" : "s",
+          "custom" : {
+            "lineWidth" : 1,
+            "fillOpacity" : 0,
+            "showPoints" : "never",
+            "spanNulls" : true,
+            "stacking" : {
+              "mode" : "none"
+            }
+          },
+          "min" : 0
+        },
+        "overrides" : [ ]
+      },
+      "options" : {
+        "legend" : {
+          "displayMode" : "list",
+          "placement" : "bottom",
+          "showLegend" : true
+        },
+        "tooltip" : {
+          "mode" : "multi",
+          "sort" : "desc"
+        }
+      }
+    },
+    {
+      "type" : "timeseries",
+      "title" : "Calls to pricing: outcomes/s",
+      "description" : "",
+      "id" : 26,
+      "datasource" : {
+        "type" : "prometheus",
+        "uid" : "prometheus"
+      },
+      "gridPos" : {
+        "x" : 8,
+        "y" : 62,
+        "w" : 8,
+        "h" : 8
+      },
+      "targets" : [
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "sum by (route, outcome) (rate(http_client_requests_total{job=\"api\"}[$__rate_interval]))",
+          "legendFormat" : "{{route}} {{outcome}}",
+          "refId" : "A",
+          "exemplar" : false
+        }
+      ],
+      "fieldConfig" : {
+        "defaults" : {
+          "unit" : "reqps",
+          "custom" : {
+            "lineWidth" : 1,
+            "fillOpacity" : 0,
+            "showPoints" : "never",
+            "spanNulls" : true,
+            "stacking" : {
+              "mode" : "none"
+            }
+          },
+          "min" : 0
+        },
+        "overrides" : [ ]
+      },
+      "options" : {
+        "legend" : {
+          "displayMode" : "list",
+          "placement" : "bottom",
+          "showLegend" : true
+        },
+        "tooltip" : {
+          "mode" : "multi",
+          "sort" : "desc"
+        }
+      }
+    },
+    {
+      "type" : "timeseries",
+      "title" : "Cache hit ratio",
+      "description" : "",
+      "id" : 27,
+      "datasource" : {
+        "type" : "prometheus",
+        "uid" : "prometheus"
+      },
+      "gridPos" : {
+        "x" : 16,
+        "y" : 62,
+        "w" : 8,
+        "h" : 8
+      },
+      "targets" : [
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "sum(rate(cache_requests_total{result=\"hit\"}[$__rate_interval])) / sum(rate(cache_requests_total[$__rate_interval]))",
+          "legendFormat" : "hit ratio",
+          "refId" : "A",
+          "exemplar" : false
+        }
+      ],
+      "fieldConfig" : {
+        "defaults" : {
+          "unit" : "percentunit",
+          "custom" : {
+            "lineWidth" : 1,
+            "fillOpacity" : 0,
+            "showPoints" : "never",
+            "spanNulls" : true,
+            "stacking" : {
+              "mode" : "none"
+            }
+          },
+          "min" : 0
+        },
+        "overrides" : [ ]
+      },
+      "options" : {
+        "legend" : {
+          "displayMode" : "list",
+          "placement" : "bottom",
+          "showLegend" : true
+        },
+        "tooltip" : {
+          "mode" : "multi",
+          "sort" : "desc"
+        }
+      }
+    },
+    {
+      "type" : "row",
+      "title" : "5 · Downstream as seen by itself",
+      "collapsed" : false,
+      "id" : 28,
+      "gridPos" : {
+        "x" : 0,
+        "y" : 70,
+        "w" : 24,
+        "h" : 1
+      },
+      "panels" : [ ]
+    },
+    {
+      "type" : "timeseries",
+      "title" : "pricing: requests/s by route and status",
+      "description" : "",
+      "id" : 29,
+      "datasource" : {
+        "type" : "prometheus",
+        "uid" : "prometheus"
+      },
+      "gridPos" : {
+        "x" : 0,
+        "y" : 71,
+        "w" : 8,
+        "h" : 8
+      },
+      "targets" : [
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "sum by (route, status) (rate(http_server_requests_total{job=\"pricing\"}[$__rate_interval]))",
+          "legendFormat" : "{{route}} {{status}}",
+          "refId" : "A",
+          "exemplar" : false
+        }
+      ],
+      "fieldConfig" : {
+        "defaults" : {
+          "unit" : "reqps",
+          "custom" : {
+            "lineWidth" : 1,
+            "fillOpacity" : 0,
+            "showPoints" : "never",
+            "spanNulls" : true,
+            "stacking" : {
+              "mode" : "none"
+            }
+          },
+          "min" : 0
+        },
+        "overrides" : [ ]
+      },
+      "options" : {
+        "legend" : {
+          "displayMode" : "list",
+          "placement" : "bottom",
+          "showLegend" : true
+        },
+        "tooltip" : {
+          "mode" : "multi",
+          "sort" : "desc"
+        }
+      }
+    },
+    {
+      "type" : "timeseries",
+      "title" : "pricing: p99 by route (server side)",
+      "description" : "",
+      "id" : 30,
+      "datasource" : {
+        "type" : "prometheus",
+        "uid" : "prometheus"
+      },
+      "gridPos" : {
+        "x" : 8,
+        "y" : 71,
+        "w" : 8,
+        "h" : 8
+      },
+      "targets" : [
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "histogram_quantile(0.99, sum by (le, route) (rate(http_server_duration_seconds_bucket{job=\"pricing\"}[$__rate_interval])))",
+          "legendFormat" : "{{route}}",
+          "refId" : "A",
+          "exemplar" : true
+        }
+      ],
+      "fieldConfig" : {
+        "defaults" : {
+          "unit" : "s",
+          "custom" : {
+            "lineWidth" : 1,
+            "fillOpacity" : 0,
+            "showPoints" : "never",
+            "spanNulls" : true,
+            "stacking" : {
+              "mode" : "none"
+            }
+          },
+          "min" : 0
+        },
+        "overrides" : [ ]
+      },
+      "options" : {
+        "legend" : {
+          "displayMode" : "list",
+          "placement" : "bottom",
+          "showLegend" : true
+        },
+        "tooltip" : {
+          "mode" : "multi",
+          "sort" : "desc"
+        }
+      }
+    },
+    {
+      "type" : "timeseries",
+      "title" : "Postgres: queries/s (counted by Postgres)",
+      "description" : "",
+      "id" : 31,
+      "datasource" : {
+        "type" : "prometheus",
+        "uid" : "prometheus"
+      },
+      "gridPos" : {
+        "x" : 16,
+        "y" : 71,
+        "w" : 8,
+        "h" : 8
+      },
+      "targets" : [
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "sum by (query) (rate(pg_query_calls_total[$__rate_interval]))",
+          "legendFormat" : "{{query}}",
+          "refId" : "A",
+          "exemplar" : false
+        }
+      ],
+      "fieldConfig" : {
+        "defaults" : {
+          "unit" : "reqps",
+          "custom" : {
+            "lineWidth" : 1,
+            "fillOpacity" : 0,
+            "showPoints" : "never",
+            "spanNulls" : true,
+            "stacking" : {
+              "mode" : "none"
+            }
+          },
+          "min" : 0
+        },
+        "overrides" : [ ]
+      },
+      "options" : {
+        "legend" : {
+          "displayMode" : "list",
+          "placement" : "bottom",
+          "showLegend" : true
+        },
+        "tooltip" : {
+          "mode" : "multi",
+          "sort" : "desc"
+        }
+      }
+    },
+    {
+      "type" : "timeseries",
+      "title" : "Postgres: mean exec time per query",
+      "description" : "Measured inside Postgres: includes lock waits, excludes network and the app's pool wait.",
+      "id" : 32,
+      "datasource" : {
+        "type" : "prometheus",
+        "uid" : "prometheus"
+      },
+      "gridPos" : {
+        "x" : 0,
+        "y" : 79,
+        "w" : 8,
+        "h" : 8
+      },
+      "targets" : [
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "sum by (query) (rate(pg_query_exec_seconds_total[$__rate_interval])) / sum by (query) (rate(pg_query_calls_total[$__rate_interval]))",
+          "legendFormat" : "{{query}}",
+          "refId" : "A",
+          "exemplar" : false
+        }
+      ],
+      "fieldConfig" : {
+        "defaults" : {
+          "unit" : "s",
+          "custom" : {
+            "lineWidth" : 1,
+            "fillOpacity" : 0,
+            "showPoints" : "never",
+            "spanNulls" : true,
+            "stacking" : {
+              "mode" : "none"
+            }
+          },
+          "min" : 0
+        },
+        "overrides" : [ ]
+      },
+      "options" : {
+        "legend" : {
+          "displayMode" : "list",
+          "placement" : "bottom",
+          "showLegend" : true
+        },
+        "tooltip" : {
+          "mode" : "multi",
+          "sort" : "desc"
+        }
+      }
+    },
+    {
+      "type" : "row",
+      "title" : "6 · Async (Kafka)",
+      "collapsed" : false,
+      "id" : 33,
+      "gridPos" : {
+        "x" : 0,
+        "y" : 87,
+        "w" : 24,
+        "h" : 1
+      },
+      "panels" : [ ]
+    },
+    {
+      "type" : "timeseries",
+      "title" : "Produce/s and consume/s",
+      "description" : "",
+      "id" : 34,
+      "datasource" : {
+        "type" : "prometheus",
+        "uid" : "prometheus"
+      },
+      "gridPos" : {
+        "x" : 0,
+        "y" : 88,
+        "w" : 8,
+        "h" : 8
+      },
+      "targets" : [
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "sum by (source) (rate(kafka_produced_total{outcome=\"ok\"}[$__rate_interval]))",
+          "legendFormat" : "produce {{source}}",
+          "refId" : "A",
+          "exemplar" : false
+        },
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "sum(rate(kafka_consumed_total{outcome=\"ok\"}[$__rate_interval]))",
+          "legendFormat" : "consume ok",
+          "refId" : "B",
+          "exemplar" : false
+        },
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "sum(rate(kafka_consumed_total{outcome=\"error\"}[$__rate_interval])) or vector(0)",
+          "legendFormat" : "consume errors",
+          "refId" : "C",
+          "exemplar" : false
+        }
+      ],
+      "fieldConfig" : {
+        "defaults" : {
+          "unit" : "reqps",
+          "custom" : {
+            "lineWidth" : 1,
+            "fillOpacity" : 0,
+            "showPoints" : "never",
+            "spanNulls" : true,
+            "stacking" : {
+              "mode" : "none"
+            }
+          },
+          "min" : 0
+        },
+        "overrides" : [ ]
+      },
+      "options" : {
+        "legend" : {
+          "displayMode" : "list",
+          "placement" : "bottom",
+          "showLegend" : true
+        },
+        "tooltip" : {
+          "mode" : "multi",
+          "sort" : "desc"
+        }
+      }
+    },
+    {
+      "type" : "timeseries",
+      "title" : "Processing time per message (p50, p99)",
+      "description" : "",
+      "id" : 35,
+      "datasource" : {
+        "type" : "prometheus",
+        "uid" : "prometheus"
+      },
+      "gridPos" : {
+        "x" : 8,
+        "y" : 88,
+        "w" : 8,
+        "h" : 8
+      },
+      "targets" : [
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "histogram_quantile(0.5, sum by (le) (rate(kafka_processing_seconds_bucket[$__rate_interval])))",
+          "legendFormat" : "p50",
+          "refId" : "A",
+          "exemplar" : true
+        },
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "histogram_quantile(0.99, sum by (le) (rate(kafka_processing_seconds_bucket[$__rate_interval])))",
+          "legendFormat" : "p99",
+          "refId" : "B",
+          "exemplar" : true
+        }
+      ],
+      "fieldConfig" : {
+        "defaults" : {
+          "unit" : "s",
+          "custom" : {
+            "lineWidth" : 1,
+            "fillOpacity" : 0,
+            "showPoints" : "never",
+            "spanNulls" : true,
+            "stacking" : {
+              "mode" : "none"
+            }
+          },
+          "min" : 0
+        },
+        "overrides" : [ ]
+      },
+      "options" : {
+        "legend" : {
+          "displayMode" : "list",
+          "placement" : "bottom",
+          "showLegend" : true
+        },
+        "tooltip" : {
+          "mode" : "multi",
+          "sort" : "desc"
+        }
+      }
+    },
+    {
+      "type" : "timeseries",
+      "title" : "End-to-end p99: event created to processed",
+      "description" : "",
+      "id" : 36,
+      "datasource" : {
+        "type" : "prometheus",
+        "uid" : "prometheus"
+      },
+      "gridPos" : {
+        "x" : 16,
+        "y" : 88,
+        "w" : 8,
+        "h" : 8
+      },
+      "targets" : [
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "histogram_quantile(0.99, sum by (le) (rate(kafka_end_to_end_seconds_bucket[$__rate_interval])))",
+          "legendFormat" : "p99",
+          "refId" : "A",
+          "exemplar" : true
+        }
+      ],
+      "fieldConfig" : {
+        "defaults" : {
+          "unit" : "s",
+          "custom" : {
+            "lineWidth" : 1,
+            "fillOpacity" : 0,
+            "showPoints" : "never",
+            "spanNulls" : true,
+            "stacking" : {
+              "mode" : "none"
+            }
+          },
+          "min" : 0
+        },
+        "overrides" : [ ]
+      },
+      "options" : {
+        "legend" : {
+          "displayMode" : "list",
+          "placement" : "bottom",
+          "showLegend" : true
+        },
+        "tooltip" : {
+          "mode" : "multi",
+          "sort" : "desc"
+        }
+      }
+    },
+    {
+      "type" : "timeseries",
+      "title" : "Lag by partition (messages)",
+      "description" : "",
+      "id" : 37,
+      "datasource" : {
+        "type" : "prometheus",
+        "uid" : "prometheus"
+      },
+      "gridPos" : {
+        "x" : 0,
+        "y" : 96,
+        "w" : 8,
+        "h" : 8
+      },
+      "targets" : [
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "kafka_consumer_lag_messages",
+          "legendFormat" : "p{{partition}}",
+          "refId" : "A",
+          "exemplar" : false
+        }
+      ],
+      "fieldConfig" : {
+        "defaults" : {
+          "unit" : "short",
+          "custom" : {
+            "lineWidth" : 1,
+            "fillOpacity" : 0,
+            "showPoints" : "never",
+            "spanNulls" : true,
+            "stacking" : {
+              "mode" : "none"
+            }
+          },
+          "min" : 0
+        },
+        "overrides" : [ ]
+      },
+      "options" : {
+        "legend" : {
+          "displayMode" : "list",
+          "placement" : "bottom",
+          "showLegend" : true
+        },
+        "tooltip" : {
+          "mode" : "multi",
+          "sort" : "desc"
+        }
+      }
+    },
+    {
+      "type" : "timeseries",
+      "title" : "Lag by partition (seconds)",
+      "description" : "",
+      "id" : 38,
+      "datasource" : {
+        "type" : "prometheus",
+        "uid" : "prometheus"
+      },
+      "gridPos" : {
+        "x" : 8,
+        "y" : 96,
+        "w" : 8,
+        "h" : 8
+      },
+      "targets" : [
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "kafka_consumer_lag_seconds",
+          "legendFormat" : "p{{partition}}",
+          "refId" : "A",
+          "exemplar" : false
+        }
+      ],
+      "fieldConfig" : {
+        "defaults" : {
+          "unit" : "s",
+          "custom" : {
+            "lineWidth" : 1,
+            "fillOpacity" : 0,
+            "showPoints" : "never",
+            "spanNulls" : true,
+            "stacking" : {
+              "mode" : "none"
+            }
+          },
+          "min" : 0
+        },
+        "overrides" : [ ]
+      },
+      "options" : {
+        "legend" : {
+          "displayMode" : "list",
+          "placement" : "bottom",
+          "showLegend" : true
+        },
+        "tooltip" : {
+          "mode" : "multi",
+          "sort" : "desc"
+        }
+      }
+    },
+    {
+      "type" : "timeseries",
+      "title" : "Retries/s by partition",
+      "description" : "",
+      "id" : 39,
+      "datasource" : {
+        "type" : "prometheus",
+        "uid" : "prometheus"
+      },
+      "gridPos" : {
+        "x" : 16,
+        "y" : 96,
+        "w" : 8,
+        "h" : 8
+      },
+      "targets" : [
+        {
+          "datasource" : {
+            "type" : "prometheus",
+            "uid" : "prometheus"
+          },
+          "expr" : "sum by (partition) (rate(kafka_consumer_retries_total[$__rate_interval])) or 0 * sum by (partition) (kafka_consumer_lag_messages)",
+          "legendFormat" : "p{{partition}}",
+          "refId" : "A",
+          "exemplar" : false
+        }
+      ],
+      "fieldConfig" : {
+        "defaults" : {
+          "unit" : "short",
+          "custom" : {
+            "lineWidth" : 1,
+            "fillOpacity" : 0,
+            "showPoints" : "never",
+            "spanNulls" : true,
+            "stacking" : {
+              "mode" : "none"
+            }
+          },
+          "min" : 0
+        },
+        "overrides" : [ ]
+      },
+      "options" : {
+        "legend" : {
+          "displayMode" : "list",
+          "placement" : "bottom",
+          "showLegend" : true
+        },
+        "tooltip" : {
+          "mode" : "multi",
+          "sort" : "desc"
+        }
+      }
+    }
+  ]
+}

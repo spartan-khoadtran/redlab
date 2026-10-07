@@ -1,0 +1,42 @@
+micronaut:
+  application:
+    name: worker
+  server:
+    port: ${PORT:8002}
+
+jackson:
+  property-naming-strategy: SNAKE_CASE
+
+otel:
+  service:
+    name: ${SERVICE_NAME:worker}
+  exporter:
+    otlp:
+      endpoint: ${OTLP_ENDPOINT:`http://tempo:4318`}
+      protocol: http/protobuf
+  traces:
+    exporter: otlp
+    sampler: parentbased_traceidratio
+    sampler.arg: ${TRACE_SAMPLE_RATIO:1.0}
+  metrics:
+    exporter: none
+  logs:
+    exporter: none
+  # Not traced: the scrape, the controller's fault pushes and Envoy's health checks would drown the real requests.
+  exclusions:
+    - /health
+    - /metrics
+    - /admin/.*
+
+app:
+  service:
+    name: ${SERVICE_NAME:worker}
+  database:
+    url: ${DB_URL:`jdbc:postgresql://postgres:5432/lab`}
+    username: ${DB_USERNAME:lab}
+    password: ${DB_PASSWORD:lab}
+    pool-max: 3
+  kafka:
+    bootstrap: ${KAFKA_BOOTSTRAP:`kafka:9092`}
+    topic: ${KAFKA_TOPIC:orders}
+    partitions: ${KAFKA_PARTITIONS:3}

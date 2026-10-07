@@ -1,0 +1,7 @@
+// Prometheus-shaped meters on top of Micrometer: fixed latency buckets, label-keyed counters,
+// histograms and gauges, plus the process and cgroup (container) binders behind the USE panels.
+dependencies {
+  api(libs.micrometer.core)
+
+  testImplementation(libs.micrometer.registry.prometheus)
+}

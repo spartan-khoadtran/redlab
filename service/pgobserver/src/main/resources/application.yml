@@ -1,0 +1,17 @@
+micronaut:
+  application:
+    name: pgobserver
+  server:
+    port: ${PORT:8004}
+
+jackson:
+  property-naming-strategy: SNAKE_CASE
+
+app:
+  service:
+    name: ${SERVICE_NAME:pgobserver}
+  database:
+    url: ${DB_URL:`jdbc:postgresql://postgres:5432/lab`}
+    username: ${DB_USERNAME:lab}
+    password: ${DB_PASSWORD:lab}
+    pool-max: 2

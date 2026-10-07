@@ -1,0 +1,37 @@
+micronaut:
+  application:
+    name: loadgen
+  server:
+    port: ${PORT:8003}
+
+jackson:
+  property-naming-strategy: SNAKE_CASE
+
+# loadgen makes the root sampling decision for every trace; the other services follow it.
+otel:
+  service:
+    name: ${SERVICE_NAME:loadgen}
+  exporter:
+    otlp:
+      endpoint: ${OTLP_ENDPOINT:`http://tempo:4318`}
+      protocol: http/protobuf
+  traces:
+    exporter: otlp
+    sampler: parentbased_traceidratio
+    sampler.arg: ${TRACE_SAMPLE_RATIO:0.25}
+  metrics:
+    exporter: none
+  logs:
+    exporter: none
+  # Not traced: the scrape, the controller's fault pushes and Envoy's health checks would drown the real requests.
+  exclusions:
+    - /health
+    - /metrics
+    - /admin/.*
+
+app:
+  service:
+    name: ${SERVICE_NAME:loadgen}
+  loadgen:
+    target-url: ${TARGET_URL:`http://envoy:8080`}
+    start-delay: ${START_DELAY:5s}

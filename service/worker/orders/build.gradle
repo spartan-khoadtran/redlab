@@ -1,0 +1,51 @@
+plugins {
+  id("application")
+  alias(libs.plugins.ksp)
+}
+
+group "com.c0x12c.redlab.worker.orders"
+version "1.0-SNAPSHOT"
+
+// worker:orders: the Kafka consumer behind the async exercises. One sequential worker per
+// partition, so a stuck message blocks only its partition, like most real consumers that keep
+// per-partition order. Serves /health, /metrics and /admin/faults alongside.
+dependencies {
+  implementation(libs.kotlin.stdlib)
+
+  implementation(project(":domain:module-checkout:module-api"))
+  implementation(project(":shared:module-client"))
+  implementation(project(":shared:module-infra"))
+  implementation(project(":core:module-database"))
+  implementation(project(":core:module-faults"))
+  implementation(project(":core:module-logging"))
+  implementation(project(":core:module-metrics"))
+  implementation(project(":core:module-tracing"))
+  implementation(project(":core:module-utility"))
+  runtimeOnly(project(":domain:module-checkout:module-repository"))
+
+  implementation(libs.jackson.databind)
+  implementation(libs.kotlinx.coroutines.core)
+  implementation(mn.kafka.clients)
+
+  implementation(mn.micronaut.kotlin.runtime)
+  implementation(mn.micronaut.runtime)
+  implementation(mn.micronaut.http.server.netty)
+  implementation(mn.micronaut.jackson.databind)
+  implementation(mn.micronaut.inject)
+  ksp(mn.micronaut.inject.kotlin)
+
+  implementation(mn.micronaut.tracing.opentelemetry.http)
+  runtimeOnly(libs.opentelemetry.exporter.otlp) {
+    exclude group: "io.opentelemetry", module: "opentelemetry-exporter-sender-okhttp"
+  }
+  runtimeOnly(libs.opentelemetry.exporter.sender.jdk)
+
+  implementation(libs.jackson.module.kotlin)
+  implementation(libs.logging.logback.classic)
+  runtimeOnly(libs.utility.snakeyaml)
+}
+
+application {
+  mainClass.set("com.c0x12c.redlab.worker.orders.Main")
+  applicationName = "orders-worker"
+}

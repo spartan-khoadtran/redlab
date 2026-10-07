@@ -1,0 +1,6 @@
+// The error contract: one open ClientException, the wire ErrorResponse and the error catalogs.
+// HttpStatus is the one framework type here, because the status is part of the contract.
+dependencies {
+  api(mn.micronaut.http)
+  api(libs.arrow.core)
+}

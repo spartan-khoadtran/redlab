@@ -1,0 +1,8 @@
+// A Hikari pool plus thin JDBC helpers. Raw SQL on purpose: every statement the lab sends carries a
+// /* q=name */ comment that pgobserver reads back out of pg_stat_statements, and the repositories
+// time each statement themselves. An ORM would hide both.
+dependencies {
+  api(project(":core:module-logging"))
+  api(libs.database.hikaricp)
+  runtimeOnly(libs.database.postgresql)
+}

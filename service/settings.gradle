@@ -1,0 +1,67 @@
+pluginManagement {
+  repositories {
+    mavenCentral()
+    gradlePluginPortal()
+  }
+
+  plugins {
+    id("org.jetbrains.kotlin.jvm") version("2.3.10")
+    id("com.google.devtools.ksp") version("2.3.4")
+  }
+}
+
+plugins {
+  id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
+}
+
+dependencyResolutionManagement {
+  repositories {
+    mavenCentral()
+  }
+  versionCatalogs {
+    create("mn") {
+      from("io.micronaut.platform:micronaut-platform:${micronautVersion}")
+    }
+  }
+}
+
+rootProject.name = "redlab"
+
+// ─── core: infra, knows no domain and no framework ───
+include(
+  "core:module-logging",
+  "core:module-utility",
+  "core:module-faults",
+  "core:module-metrics",
+  "core:module-tracing",
+  "core:module-database"
+)
+
+// ─── shared: the error contract, and the Micronaut wiring every deployable inherits ───
+include(
+  "shared:module-exception",
+  "shared:module-client",
+  "shared:module-infra"
+)
+
+// ─── domain: the checkout vertical, api + repository + impl split ───
+include(
+  "domain:module-checkout:module-api",
+  "domain:module-checkout:module-repository",
+  "domain:module-checkout:module-impl"
+)
+
+// ─── deployables: thin composition roots ───
+// api/ groups the HTTP services and worker/ the queue consumers, like service-opstracer. The load
+// generator, the noisy neighbour and the Postgres exporter are none of those, so they stay flat and
+// are named for what they are. tool/ holds the CLIs.
+include(
+  "api:checkout",
+  "api:pricing",
+  "worker:orders",
+  "loadgen",
+  "noisy",
+  "pgobserver",
+  "tool:labctl",
+  "tool:dashboards"
+)
