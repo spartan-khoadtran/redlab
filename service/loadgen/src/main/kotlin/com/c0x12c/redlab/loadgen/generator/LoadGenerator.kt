@@ -75,6 +75,8 @@ class LoadGenerator(
     Gauge.builder("client_inflight", counter) { it.get().toDouble() }.description("Requests waiting for an answer").register(registry)
   }
 
+  private val crawlCursor = AtomicInteger()
+
   private val http = OkHttpClient.Builder()
     .dispatcher(
       Dispatcher().apply {
@@ -200,10 +202,10 @@ class LoadGenerator(
     }
   }
 
-  // A crawler walks the whole catalog and almost never hits the cache; users mostly browse the first 50.
+  // A crawler walks the catalog in order, so it never meets a product it cached; users mostly browse the first 50.
   private fun pickProduct(crawl: Boolean): Int =
     when {
-      crawl -> Random.nextInt(1, CATALOG_SIZE + 1)
+      crawl -> crawlCursor.getAndIncrement().mod(CATALOG_SIZE) + 1
       Random.nextDouble() < HOT_SHARE -> Random.nextInt(1, HOT_PRODUCTS + 1)
       else -> Random.nextInt(1, WARM_PRODUCTS + 1)
     }
